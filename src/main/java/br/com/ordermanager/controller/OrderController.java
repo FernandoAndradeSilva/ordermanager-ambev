@@ -29,7 +29,6 @@ public class OrderController {
     // Reecebe requisicao de consulta do pedido
     @PostMapping("/{orderId}")
     public ResponseEntity<?> receiveOrderFromExternalA(@PathVariable Long orderId) {
-
         logger.info("Received request to manage order with orderId: " + orderId);
 
         try {
