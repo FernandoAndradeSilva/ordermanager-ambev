@@ -25,10 +25,9 @@ public class OrderController {
     // Dto's devem ser usados para trafegar dados entre a aplicação e o cliente
     // O uso de DTOs é uma prática comum para evitar que entidades sejam expostas fora do serviço
 
-
     // Reecebe requisicao de consulta do pedido
     @PostMapping("/{orderId}")
-    public ResponseEntity<?> receiveOrderFromExternalA(@PathVariable Long orderId) {
+    public ResponseEntity<?> receiveOrderId(@PathVariable Long orderId) {
         logger.info("Received request to manage order with orderId: " + orderId);
 
         try {
@@ -40,7 +39,6 @@ public class OrderController {
         }
 
         return new ResponseEntity<>(HttpStatus.OK);
-
 
     }
 

@@ -8,3 +8,8 @@ services:
       - MYSQL_DATABASE=orderdatabase
       - MYSQL_USER=admin
       - MYSQL_PASSWORD=admin
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"

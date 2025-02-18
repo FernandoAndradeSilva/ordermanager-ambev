@@ -1,5 +1,6 @@
 package br.com.ordermanager.entties;
 
+import br.com.ordermanager.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,11 +16,11 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order")
     private List<Product> products;
 
     private Double totalAmount;
 
-    private String status;
+    private OrderStatus status;
 }
 
