@@ -1,6 +1,5 @@
 package br.com.ordermanager.controller;
 
-import br.com.ordermanager.entties.Order;
 import br.com.ordermanager.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.logging.Log;
@@ -30,19 +29,12 @@ public class OrderController {
     public ResponseEntity<?> receiveOrderId(@PathVariable Long orderId) {
         logger.info("Received request to manage order with orderId: " + orderId);
 
-        try {
-            service.managerOrderComplete(orderId);
-            logger.info("Order management completed successfully for orderId: " + orderId);
-        } catch (Exception e) {
-            logger.error("Error managing order with orderId: " + orderId, e);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        service.managerOrderComplete(orderId);
+        logger.info("Order management completed successfully for orderId: " + orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
 
     }
-
-
 
 
 }

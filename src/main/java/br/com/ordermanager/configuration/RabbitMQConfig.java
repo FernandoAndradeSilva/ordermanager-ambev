@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    public static final String ORDER_CREATED_QUEUE = "ordersQueue";
+
     @Bean
     public CachingConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
@@ -24,7 +26,7 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue ordersQueue() {
-        return new Queue("ordersQueue", true);
+        return new Queue(ORDER_CREATED_QUEUE, true);
     }
 }
 

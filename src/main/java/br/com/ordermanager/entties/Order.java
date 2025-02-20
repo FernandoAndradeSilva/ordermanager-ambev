@@ -4,9 +4,9 @@ import br.com.ordermanager.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
-
-
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 @Data
 @Entity
@@ -22,5 +22,17 @@ public class Order {
     private Double totalAmount;
 
     private OrderStatus status;
-}
 
+    @Override
+    public String toString() {
+        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+        currencyFormat.setMinimumFractionDigits(2);
+        currencyFormat.setMaximumFractionDigits(2);
+        return "Order{\n" +
+                "id=" + id + ",\n" +
+                "produtos=" + products + ",\n" +
+                "valorTotal=" + currencyFormat.format(totalAmount) + ",\n" +
+                "status='" + status + '\'' + "\n" +
+                '}';
+    }
+}

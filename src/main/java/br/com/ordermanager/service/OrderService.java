@@ -6,6 +6,7 @@ import br.com.ordermanager.entties.Order;
 import br.com.ordermanager.enums.OrderStatus;
 import br.com.ordermanager.mapper.OrderMapper;
 import br.com.ordermanager.repository.OrderRepository;
+import br.com.ordermanager.service.exceptions.DuplicateOrderIdException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.logging.Log;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
+
+import static br.com.ordermanager.configuration.RabbitMQConfig.ORDER_CREATED_QUEUE;
 
 @RequiredArgsConstructor
 @Service
@@ -32,11 +35,11 @@ public class OrderService {
 
         if (isDuplicateOrder(orderId)) {
             logger.warn("Duplicate order detected: " + orderId);
-            throw new IllegalArgumentException("Pedido duplicado: " + orderId);
+            throw new DuplicateOrderIdException("Pedido já existente: " + orderId);
         }
 
         // Enviar o pedido para a fila RabbitMQ para processamento assíncrono
-        rabbitTemplate.convertAndSend("ordersQueue", orderId);
+        rabbitTemplate.convertAndSend(ORDER_CREATED_QUEUE, orderId);
         logger.info("Order sent to RabbitMQ for processing: " + orderId);
     }
 
@@ -44,18 +47,30 @@ public class OrderService {
     // Mecanismo para limitar a taxa de consumo de mensagens da fila RabbitMQ.
     // Isso ajuda a evitar que o banco de dados seja sobrecarregado por um grande volume
     // de operações simultâneas.
-    @RabbitListener(queues = "ordersQueue", concurrency = "5-10")
+    @RabbitListener(queues = ORDER_CREATED_QUEUE, concurrency = "5-10")
     public void processOrder(Long orderId) {
         logger.info("Processing order from RabbitMQ for orderId: " + orderId);
 
         try {
 
-            //OrderDTO order = fetchOrderFromExternalA(orderId);
+            // AS INTEGRAÇÕES ESTÃO COMENTADAS PORQUE NÃO FOI PEDIDO PARA IMPLEMENTAR A QUESTÃO DOS PRODUTOS INTERNOS
+            // OrderDTO order = fetchOrderFromExternalA(orderId);
+            // AQUI TEORICAMENTE A INTEGRAÇÃO RETORNA O PEDIDO DO CLIENTE
 
-            OrderDTO managedOrder = mockOrderDto();
+            // CRIEI UM MOCK DTO PARA REPRESENTAR O RETORNO DA API EXTERNA A
+            OrderDTO mockOrderDto = mockOrderDto();
 
+            // AQUI O PEDIDO É CALCULADO
+            OrderDTO managedOrder = calculateOrder(mockOrderDto);
+
+            // AQUI O PEDIDO É SALVO NO BANCO DE DADOS
+            Order order = saveOrder(managedOrder);
+
+            // CONFORME SOLICITADO NO TESTE AQUI O PEDIDO É ENVIADO AO PRODUTO EXTERNO PARA PROCESSAMENTO
             //sendOrderToExternalB(managedOrder);
-            saveOrder(managedOrder);
+
+            logger.info("O PEDIDO SERÁ ENVIADO AO SERVIÇO EXTERNO B:" + order);
+
             logger.info("Order processing completed for orderId: " + orderId);
         } catch (Exception e) {
             logger.error("Error processing order from RabbitMQ for orderId: " + orderId, e);
@@ -72,8 +87,7 @@ public class OrderService {
 
         orderDTO.setProducts(Arrays.asList(productDTO, productDTO1));
 
-        OrderDTO managedOrder = calculateOrder(orderDTO);
-        return managedOrder;
+        return orderDTO;
     }
 
     public OrderDTO calculateOrder(OrderDTO orderDTO) {
@@ -98,13 +112,13 @@ public class OrderService {
         restTemplate.postForEntity(url, order, Void.class);
     }
 
-    private void saveOrder(OrderDTO managedOrder) {
+    private Order saveOrder(OrderDTO managedOrder) {
         logger.info("Saving order to database for order: " + managedOrder);
         Order order = OrderMapper.INSTANCE.toEntity(managedOrder);
         try {
             order.setStatus(OrderStatus.PENDING);
-            orderRepository.save(order);
-            logger.info("Order saved to database for order: " + order);
+            logger.info("Order saved to database");
+            return orderRepository.save(order);
         } catch (Exception e) {
             logger.error("Error saving order to database for orderId: " + managedOrder, e);
             throw new RuntimeException("Erro ao salvar o pedido no banco de dados");

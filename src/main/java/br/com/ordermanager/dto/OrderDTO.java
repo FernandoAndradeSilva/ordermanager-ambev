@@ -16,4 +16,14 @@ public class OrderDTO {
     private Double totalAmount;
 
     private String status;
+
+    @Override
+    public String toString() {
+        return "OrderDTO{" +
+                "produtos=" + products +
+                ", valorTotal=" + totalAmount +
+                ", status='" + status + '\'' +
+                '}';
+    }
+
 }
