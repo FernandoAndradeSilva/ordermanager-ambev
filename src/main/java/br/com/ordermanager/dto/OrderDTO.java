@@ -10,7 +10,6 @@ import java.util.List;
 @Data
 public class OrderDTO {
 
-    @OneToMany(cascade = CascadeType.ALL)
     private List<ProductDTO> products;
 
     private Double totalAmount;

@@ -31,6 +31,7 @@ public class OrderService {
 
     @Transactional
     public void managerOrderComplete(Long orderId) {
+
         logger.info("Starting order management for orderId: " + orderId);
 
         if (isDuplicateOrder(orderId)) {
@@ -47,6 +48,7 @@ public class OrderService {
     // Mecanismo para limitar a taxa de consumo de mensagens da fila RabbitMQ.
     // Isso ajuda a evitar que o banco de dados seja sobrecarregado por um grande volume
     // de operações simultâneas.
+    @Transactional
     @RabbitListener(queues = ORDER_CREATED_QUEUE, concurrency = "5-10")
     public void processOrder(Long orderId) {
         logger.info("Processing order from RabbitMQ for orderId: " + orderId);
@@ -55,7 +57,7 @@ public class OrderService {
 
             // AS INTEGRAÇÕES ESTÃO COMENTADAS PORQUE NÃO FOI PEDIDO PARA IMPLEMENTAR A QUESTÃO DOS PRODUTOS INTERNOS
             // OrderDTO order = fetchOrderFromExternalA(orderId);
-            // AQUI TEORICAMENTE A INTEGRAÇÃO RETORNA O PEDIDO DO CLIENTE
+            // AQUI A INTEGRAÇÃO RETORNA O PEDIDO DO CLIENTE
 
             // CRIEI UM MOCK DTO PARA REPRESENTAR O RETORNO DA API EXTERNA A
             OrderDTO mockOrderDto = mockOrderDto();
@@ -82,10 +84,12 @@ public class OrderService {
     private OrderDTO mockOrderDto() {
         OrderDTO orderDTO = new OrderDTO();
 
-        ProductDTO productDTO = new ProductDTO("Product 1", 10.0, 2);
-        ProductDTO productDTO1 = new ProductDTO("Product 1", 10.0, 2);
+        ProductDTO productDTO = new ProductDTO("Cabo USB", 10.0, 2);
+        ProductDTO productDTO1 = new ProductDTO("Impressora Multifunctional", 175.50, 4);
+        ProductDTO productDTO2 = new ProductDTO("Monitor", 500.0, 7);
+        ProductDTO productDTO3 = new ProductDTO("Estabilizador", 300.0, 12);
 
-        orderDTO.setProducts(Arrays.asList(productDTO, productDTO1));
+        orderDTO.setProducts(Arrays.asList(productDTO, productDTO1, productDTO2, productDTO3));
 
         return orderDTO;
     }
@@ -112,13 +116,21 @@ public class OrderService {
         restTemplate.postForEntity(url, order, Void.class);
     }
 
-    private Order saveOrder(OrderDTO managedOrder) {
+    @Transactional
+    protected Order saveOrder(OrderDTO managedOrder) {
         logger.info("Saving order to database for order: " + managedOrder);
         Order order = OrderMapper.INSTANCE.toEntity(managedOrder);
         try {
             order.setStatus(OrderStatus.PENDING);
             logger.info("Order saved to database");
-            return orderRepository.save(order);
+
+            Order savedOrder = orderRepository.save(order);
+
+            savedOrder.getProducts().forEach(product -> {
+                product.setOrder(savedOrder);
+            });
+
+            return savedOrder;
         } catch (Exception e) {
             logger.error("Error saving order to database for orderId: " + managedOrder, e);
             throw new RuntimeException("Erro ao salvar o pedido no banco de dados");

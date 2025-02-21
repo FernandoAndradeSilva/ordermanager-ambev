@@ -30,6 +30,7 @@ public class OrderController {
         logger.info("Received request to manage order with orderId: " + orderId);
 
         service.managerOrderComplete(orderId);
+
         logger.info("Order management completed successfully for orderId: " + orderId);
 
         return new ResponseEntity<>(HttpStatus.OK);
