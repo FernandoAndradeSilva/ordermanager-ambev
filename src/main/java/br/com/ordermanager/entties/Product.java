@@ -8,7 +8,7 @@ import java.util.Locale;
 
 @Data
 @Entity
-@Table(name = "`product`")
+@Table(name = "`products`")
 public class Product {
 
     @Id

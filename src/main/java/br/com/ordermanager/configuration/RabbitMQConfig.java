@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String ORDER_CREATED_QUEUE = "ordersQueue";
+    public static final String ORDER_CREATED_QUEUE = "newOrdersQueue";
 
     @Bean
     public CachingConnectionFactory connectionFactory() {
@@ -26,16 +26,9 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue ordersQueue() {
-        return new Queue(ORDER_CREATED_QUEUE, true);
-    }
-
-    // Aumentando o tamanho da fila no RabbitMQ para alta demanda
-    @Bean
     public Queue orderCreatedQueue() {
         return QueueBuilder.durable(ORDER_CREATED_QUEUE)
-                .withArgument("x-max-length", 3000)
+                .withArgument("x-max-length", 2000)
                 .build();
     }
 }
-
